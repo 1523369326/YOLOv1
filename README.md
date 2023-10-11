@@ -1,0 +1,2 @@
+# YOLOv1
+YOLOv5剪枝的过程中有很多的不懂，现手写一个YOLOv1了解一些YOLO的结构
