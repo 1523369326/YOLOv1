@@ -26,18 +26,13 @@ class YoloLoss(nn.Module):
         ious = torch.cat([iou_b1.unsqueeze(0),iou_b2.unsqueeze(0)],dim=0) 
         iou_maxes, bestbox = torch.max(ious,dim=0)
         exists_box = target[...,20].unsqueeze(3) #Iobj_i #
-A
-        # ======================== #
-        #   FOR BOX COORDINATES    #
-        #   box坐标                #
-        # ======================== #
+  
         box_predictions = exists_box * (
             (
                 bestbox * predictions[..., 26:30]
                 + (1 - bestbox) * predictions[..., 21:25]
             )
         )
-
         box_targets = exists_box * target[..., 21:25]
 
         

@@ -29,22 +29,24 @@ class YoloLoss(nn.Module):
         iou_b2 = intersection_over_union(predictions[...,26:30],target[...,21:25])
         # dim=0：指定连接维度，unsequeeze：在0维度增加一个维度 如形状为[N,S,S],unsequeeze之后变成 [1,N,S,S]
         ious = torch.cat([iou_b1.unsqueeze(0),iou_b2.unsqueeze(0)],dim=0) # [2,N,S,S]
-        iou_maxes, bestbox = torch.max(ious,dim=0)
+        iou_maxes, bestbox = torch.max(ious,dim=0) #bestbox表示最大iou的索引，形状为[N,S,S],0是1框，1是二框
         exists_box = target[...,20].unsqueeze(3) #Iobj_i 原[N, S, S]变成[N, S, S, 1]，可以和predictions进行比较
 
         # ======================== #
         #   FOR BOX COORDINATES    #
         #   box坐标                #
         # ======================== #
+        # box_predictions形状[N,S,S,4]
         box_predictions = exists_box * (
             (
                 bestbox * predictions[..., 26:30]
                 + (1 - bestbox) * predictions[..., 21:25]
             )
         )
-
+        #box_targets形状[N,S,S,4]
         box_targets = exists_box * target[..., 21:25]
 
+        #还原真实的w,h
         box_predictions[..., 2:4] = torch.sign(box_predictions[..., 2:4]) * torch.sqrt(
             torch.abs(box_predictions[..., 2,4] + le-6)
         )
@@ -85,7 +87,25 @@ class YoloLoss(nn.Module):
          )
         
         # ==================== #
+        #   FOR CLASS LOSS     #
+        #   类别损失            #
+        # ==================== #
         
+        # [N,S,S,20] -> [N*S*S,20]
+        class_loss = self.mse(
+            torch.flatten(exists_box * predictions[..., :20], end_dim=-2,),
+            torch.flatten(exists_box * target[..., :20], end_dim=-2,),
+        )
+
+        loss = (
+            self.lambda_coord * box_loss  # first two rows in paper
+            + object_loss  # third row in paper
+            + self.lambda_noobj * no_object_loss  # forth row
+            + class_loss  # fifth row
+        )
+        return loss
+    
+
         
 
         
