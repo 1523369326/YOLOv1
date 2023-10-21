@@ -57,15 +57,18 @@ class Yolov1(nn.Module):
             if type(x) == tuple:
                 layers += [
                     CNNBlock(
+                        # (7, 64, 2, 3),
                     in_channels, x[1], kernel_size=x[0], stride=x[2], padding=x[3],
                     )
                 ]
                 in_channels = x[1]
             
             elif type(x) == str:
+                # "M", #MaxPool
                 layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
             
             elif type(x) == list:
+                # [(1, 256, 1, 0), (3, 512, 1, 1), 4], #4:重复次数
                 conv1 = x[0]    #Tuple
                 conv2 = x[1]    #Tuple
                 num_repeats = x[2]  #Integer  重复次数
